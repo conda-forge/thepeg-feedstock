@@ -21,7 +21,7 @@ hepmc2:
 lhapdf:
 - '6.5'
 libboost_devel:
-- '1.88'
+- '1.90'
 target_platform:
 - linux-aarch64
 zlib:
