@@ -17,7 +17,7 @@ build:
     - make install
     - rm -rf "${PREFIX}/lib/ThePEG/Makefile" "${PREFIX}/lib/ThePEG/Makefile.common" "${PREFIX}/share/ThePEG/Doc"
     - rm -f "${PREFIX}/lib/ThePEG/runThePEG-2.2.3" "${PREFIX}/lib/ThePEG/setupThePEG-2.2.3"
-  number: 1
+  number: 2
   skip:
     - win
     - osx
@@ -40,7 +40,7 @@ requirements:
 
 tests:
   - script:
-    - runThePEG --version
+      - runThePEG --version
   - package_contents:
       lib:
         - ThePEG/*.so
