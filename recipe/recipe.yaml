@@ -8,24 +8,32 @@ package:
 source:
   url: https://thepeg.hepforge.org/downloads/ThePEG-${{ version }}.tar.bz2
   sha256: f21473197a761fc32917b08a8d24d2bfaf93ff57f3441fd605da99ac9de5d50b
+  patches:
+    - fix-libtool-darwin-allow-undefined-flag-for-macOS-11.patch
+    # TODO: Drop after move to v2.3.0 (patch is a backport)
+    - fix-C-17-compatibility-of-Config-std.h-with-libc.patch
 
 build:
+  number: 4
+  skip:
+    - win
   script:
+    # Get an updated config.sub and config.guess
+    # c.f. https://conda-forge.org/docs/how-to/advanced/cross-compilation/#autotools
+    # ThePEG sets AC_CONFIG_AUX_DIR([Config]) in configure.ac, so configure looks for them in Config/
+    - cp $BUILD_PREFIX/share/gnuconfig/config.* ./Config
     - ./configure --prefix=${PREFIX} --with-fastjet=${PREFIX} --with-gsl=${PREFIX} --with-hepmc=${PREFIX} --with-lhapdf=${PREFIX} --with-boost=${PREFIX}
     - make -j${CPU_COUNT} CXX=$CXX
     - make check
     - make install
     - rm -rf "${PREFIX}/lib/ThePEG/Makefile" "${PREFIX}/lib/ThePEG/Makefile.common" "${PREFIX}/share/ThePEG/Doc"
     - rm -f "${PREFIX}/lib/ThePEG/runThePEG-2.2.3" "${PREFIX}/lib/ThePEG/setupThePEG-2.2.3"
-  number: 3
-  skip:
-    - win
-    - osx
 
 requirements:
   build:
-    - ${{ compiler("cxx") }}
     - ${{ stdlib("c") }}
+    - ${{ compiler("cxx") }}
+    - gnuconfig
     - make
     - time
   host:
@@ -42,16 +50,20 @@ tests:
   - script:
       - runThePEG --version
   - package_contents:
-      lib:
-        - ThePEG/*.so
-        - ThePEG/*.so.*
       bin:
         - runThePEG
         - setupThePEG
         - thepeg-config
       include:
         - ThePEG/*/*
+      # Use files over lib as lib globs get the platform shared library extension
+      # appended, but the libtool '-module' plugins are named .so on macOS as well
       files:
+        - lib/ThePEG/*.so
+        - if: linux
+          then: lib/ThePEG/*.so.*
+        - if: osx
+          then: lib/ThePEG/*.dylib
         - lib/ThePEG/ThePEGDefaults-2.2.3.rpo
         - lib/ThePEG/ThePEGDefaults.rpo
         - share/*

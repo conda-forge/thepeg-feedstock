@@ -1,0 +1,52 @@
+From a9517807b5e4f4b7792228b6797038fe429ba946 Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@wisc.edu>
+Date: Tue, 29 Sep 2026 14:22:09 -0600
+Subject: [PATCH] Fix C++17 compatibility of Config/std.h with libc++
+
+std::binary_function and std::mem_fun were removed in C++17. libstdc++
+still provides them, but libc++ (used on macOS) does not, so including
+ThePEG/Config/std.h fails to compile.
+
+Backport the ThePEG 2.3.0 change that drops the binary_function base
+class of std::less<const type_info *> in favour of explicit typedefs,
+and only bring std::mem_fun into the ThePEG namespace where it exists.
+---
+ Config/std.h | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/Config/std.h b/Config/std.h
+index 485d51e..0e6c709 100644
+--- a/Config/std.h
++++ b/Config/std.h
+@@ -47,13 +47,14 @@ namespace std {
+  * sets.
+  */
+ template <>
+-struct less<const type_info *> :
+-    public binary_function<const type_info *, const type_info *, bool> 
+-{
++struct less<const type_info *> {
+   /**
+    * This is the function called when comparing two pointers to
+    * type_info.
+    */
++  typedef type_info first_argument_type;
++  typedef type_info second_argument_type;
++  typedef bool result_type;
+   bool operator()(const type_info * x, const type_info * y) const {
+     return x->before(*y); }
+ };
+@@ -97,7 +98,10 @@ using std::swap;
+ using std::min;
+ using std::max;
+ using std::mem_fn;
++// std::mem_fun was removed in C++17 and libc++ enforces this
++#if __cplusplus < 201703L || !defined(_LIBCPP_VERSION)
+ using std::mem_fun;
++#endif
+ using std::sqrt;
+ //using std::pow;
+ using std::abs;
+-- 
+2.56.0
+
