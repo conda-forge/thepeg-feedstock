@@ -88,3 +88,4 @@ extra:
     - GiacomoXT
     - vvsagar
     - AlexanderHeidelbach
+    - conda-forge/hepmc3
