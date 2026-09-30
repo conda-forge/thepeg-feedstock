@@ -27,7 +27,7 @@ build:
     - make check
     - make install
     - rm -rf "${PREFIX}/lib/ThePEG/Makefile" "${PREFIX}/lib/ThePEG/Makefile.common" "${PREFIX}/share/ThePEG/Doc"
-    - rm -f "${PREFIX}/lib/ThePEG/runThePEG-2.2.3" "${PREFIX}/lib/ThePEG/setupThePEG-2.2.3"
+    - rm -f "${PREFIX}/lib/ThePEG/runThePEG-${{ version }}" "${PREFIX}/lib/ThePEG/setupThePEG-${{ version }}"
 
 requirements:
   build:
@@ -64,7 +64,7 @@ tests:
           then: lib/ThePEG/*.so.*
         - if: osx
           then: lib/ThePEG/*.dylib
-        - lib/ThePEG/ThePEGDefaults-2.2.3.rpo
+        - lib/ThePEG/ThePEGDefaults-${{ version }}.rpo
         - lib/ThePEG/ThePEGDefaults.rpo
         - share/*
       strict: true
