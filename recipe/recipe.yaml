@@ -10,7 +10,6 @@ source:
   sha256: ac35979ae89c29608ca92c156a49ff68aace7a5a12a0c92f0a01a833d2d34572
   patches:
     - fix-libtool-darwin-allow-undefined-flag-for-macOS-11.patch
-    # TODO: Drop after move to v2.3.0 (patch is a backport)
     - fix-C-17-compatibility-of-Config-std.h-with-libc.patch
     - remove-whitespace-in-literal-operator-declarations.patch
 
