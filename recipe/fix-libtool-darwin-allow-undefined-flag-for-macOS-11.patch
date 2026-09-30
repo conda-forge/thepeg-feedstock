@@ -1,0 +1,37 @@
+From 176e5f131202efd155f09e002e2717638c38e4b5 Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@wisc.edu>
+Date: Tue, 29 Sep 2026 14:21:17 -0600
+Subject: [PATCH] Fix libtool darwin allow-undefined flag for macOS 11+
+
+The configure script was generated with libtool 2.4.6, whose darwin
+branch only sets '-undefined dynamic_lookup' when
+MACOSX_DEPLOYMENT_TARGET matches 10.*. For deployment targets >= 11.0
+(conda-forge uses 11.0 for osx-64 and osx-arm64) no case matches, so the
+'-module' plugins are linked without it and fail with undefined symbols
+from libThePEG.
+
+Minimal backport of the libtool 2.4.7 fix: fall through to
+dynamic_lookup for any deployment target not handled by the earlier
+cases.
+
+c.f. https://github.com/autotools-mirror/libtool/commit/9e8c882517082fe5755f2524d23efb02f1522490
+---
+ configure | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure b/configure
+index 3a4818e..c3ab016 100755
+--- a/configure
++++ b/configure
+@@ -9255,7 +9255,7 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
+ 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+ 	10.[012][,.]*)
+ 	  _lt_dar_allow_undefined='$wl-flat_namespace $wl-undefined ${wl}suppress' ;;
+-	10.*)
++	*)
+ 	  _lt_dar_allow_undefined='$wl-undefined ${wl}dynamic_lookup' ;;
+       esac
+     ;;
+-- 
+2.56.0
+

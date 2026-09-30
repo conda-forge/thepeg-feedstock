@@ -1,0 +1,104 @@
+From 90af4ed6ac06eca76ed206e4631d1f08dbb0ca6b Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@wisc.edu>
+Date: Tue, 29 Sep 2026 16:31:49 -0600
+Subject: [PATCH] Remove whitespace in literal operator declarations
+
+Declaring a literal operator with whitespace between the empty string
+literal and the ud-suffix (e.g. 'operator "" _MeV') is deprecated as of
+C++23 (CWG2521). clang >= 20 warns about this by default
+(-Wdeprecated-literal-operator), as does GCC 15 with -std=c++23. As
+Unitsystem.h is included in nearly every translation unit, and is an
+installed header, this results in thousands of warnings in both the
+ThePEG build and in any downstream builds.
+
+Use the 'operator ""_MeV' form, which is valid in C++11 and later.
+---
+ Config/Unitsystem.h | 28 ++++++++++++++--------------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/Config/Unitsystem.h b/Config/Unitsystem.h
+index f8ae0bb..2c37cc2 100644
+--- a/Config/Unitsystem.h
++++ b/Config/Unitsystem.h
+@@ -160,10 +160,10 @@ typedef Transverse<Energy> TransverseMomentum;
+ 
+ /// @name Pre-defined basic units.
+ //@{
+-constexpr Length operator "" _mm( long double x ) {
++constexpr Length operator ""_mm( long double x ) {
+   return Length{Length::baseunit(), static_cast<double>(x)};
+ }
+-constexpr Length operator "" _mm( unsigned long long x ) {
++constexpr Length operator ""_mm( unsigned long long x ) {
+   return Length{Length::baseunit(), static_cast<double>(x)};
+ }
+ 
+@@ -176,24 +176,24 @@ constexpr Length nanometer  = 1.0e-6_mm;
+ constexpr Length picometer  = 1.0e-9_mm;
+ constexpr Length femtometer = 1.0e-12_mm;
+  
+-constexpr Energy operator "" _MeV( long double x ) {
++constexpr Energy operator ""_MeV( long double x ) {
+   return Energy{Energy::baseunit(), static_cast<double>(x)};
+ }
+-constexpr Energy operator "" _MeV( unsigned long long x ) {
++constexpr Energy operator ""_MeV( unsigned long long x ) {
+   return Energy{Energy::baseunit(), static_cast<double>(x)};
+ }
+ 
+-constexpr Energy operator "" _GeV( long double x ) {
++constexpr Energy operator ""_GeV( long double x ) {
+   return Energy{1000_MeV, static_cast<double>(x)};
+ }
+-constexpr Energy operator "" _GeV( unsigned long long x ) {
++constexpr Energy operator ""_GeV( unsigned long long x ) {
+   return Energy{1000_MeV, static_cast<double>(x)};
+ }
+ 
+-constexpr Energy operator "" _TeV( long double x ) {
++constexpr Energy operator ""_TeV( long double x ) {
+   return Energy{1000_GeV, static_cast<double>(x)};
+ }
+-constexpr Energy operator "" _TeV( unsigned long long x ) {
++constexpr Energy operator ""_TeV( unsigned long long x ) {
+   return Energy{1000_GeV, static_cast<double>(x)};
+ }
+ 
+@@ -204,17 +204,17 @@ constexpr Energy TeV = 1_TeV;
+ 
+ 
+ 
+-constexpr Energy2 operator "" _MeV2( long double x ) {
++constexpr Energy2 operator ""_MeV2( long double x ) {
+   return Energy2{Energy2::baseunit(),	static_cast<double>(x)};
+ }
+-constexpr Energy2 operator "" _MeV2( unsigned long long x ) {
++constexpr Energy2 operator ""_MeV2( unsigned long long x ) {
+   return Energy2{Energy2::baseunit(),	static_cast<double>(x)};
+ }
+ 
+-constexpr Energy2 operator "" _GeV2( long double x ) {
++constexpr Energy2 operator ""_GeV2( long double x ) {
+   return Energy2{1.0e+6_MeV2, static_cast<double>(x)};
+ }
+-constexpr Energy2 operator "" _GeV2( unsigned long long x ) {
++constexpr Energy2 operator ""_GeV2( unsigned long long x ) {
+   return Energy2{1.0e+6_MeV2, static_cast<double>(x)};
+ }
+ 
+@@ -224,10 +224,10 @@ constexpr Energy2 GeV2 = 1_GeV2;
+ constexpr InvEnergy InvGeV = 1/GeV;
+ 
+ 
+-constexpr Area operator "" _pb( long double x ) {
++constexpr Area operator ""_pb( long double x ) {
+   return Area{1.0e-34 * Area::baseunit(), static_cast<double>(x)};
+ }
+-constexpr Area operator "" _pb( unsigned long long x ) {
++constexpr Area operator ""_pb( unsigned long long x ) {
+   return Area{1.0e-34 * Area::baseunit(), static_cast<double>(x)};
+ }
+ 
+-- 
+2.56.0
+
