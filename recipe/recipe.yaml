@@ -14,7 +14,7 @@ source:
     - remove-whitespace-in-literal-operator-declarations.patch
 
 build:
-  number: 0
+  number: 1
   skip:
     - win
   script:
@@ -37,7 +37,8 @@ requirements:
     - make
     - time
   host:
-    - fastjet-cxx
+    - fastjet-cxx  # pick up global pinning
+    - fastjet-cxx-devel
     - gsl
     - hepmc2
     - lhapdf
@@ -59,6 +60,8 @@ tests:
       # Use files over lib as lib globs get the platform shared library extension
       # appended, but the libtool '-module' plugins are named .so on macOS as well
       files:
+        # Guard against FastJet support being silently disabled at configure time
+        - lib/ThePEG/FastJetFinder.so
         - lib/ThePEG/*.so
         - if: linux
           then: lib/ThePEG/*.so.*
