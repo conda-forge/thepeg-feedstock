@@ -1,0 +1,74 @@
+From 9b31f67505ed2a76fca88aaabd3cc6c372cb091a Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@cern.ch>
+Date: Fri, 2 Oct 2026 11:14:40 -0600
+Subject: [PATCH] Add support for Rivet 4
+
+configure only recognizes 'rivet-config --version' output starting with
+'2.' or '3.', so with Rivet 4 ThePEG_RIVET_VERSION is left at 1 and
+RivetAnalysis.cc and NLORivetAnalysis.cc fail to compile with
+'#error "Unknown ThePEG_RIVET_VERSION"'. Rivet 4 also renamed
+Rivet::AnalysisHandler::checkBeams(bool) to setCheckBeams(bool).
+
+Backport of the upstream commit 'changes for rivet 4', which is not yet
+part of a ThePEG release:
+
+c.f. https://github.com/hep-mirrors/thepeg/commit/d974704fe48876c13cb7f544cabcf6ef30c00f48
+
+The upstream commit changes m4/rivet.m4. The release tarball ships a
+generated configure script, which is used as is, so the same change is
+applied to configure here instead. m4/rivet.m4 is deliberately left
+untouched: ThePEG does not use AM_MAINTAINER_MODE, so an m4 file newer
+than aclocal.m4 would make 'make' try to rerun aclocal, autoconf, and
+automake.
+---
+ Analysis/RivetAnalysis.cc | 8 ++++++++
+ configure                 | 2 ++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/Analysis/RivetAnalysis.cc b/Analysis/RivetAnalysis.cc
+index 4a6f035..6958991 100644
+--- a/Analysis/RivetAnalysis.cc
++++ b/Analysis/RivetAnalysis.cc
+@@ -184,7 +184,11 @@ void RivetAnalysis::doinit() {
+ 
+   // check that analysis list is available
+   _rivet = new Rivet::AnalysisHandler; //(fname);
++#if ThePEG_RIVET_VERSION > 3
++  _rivet->setCheckBeams(_checkBeams);
++#else
+   _rivet->checkBeams(_checkBeams);
++#endif
+   for ( int i = 0, N = _paths.size(); i < N; ++i ) Rivet::addAnalysisLibPath(_paths[i]);
+   _rivet->addAnalyses(_analyses);
+   if ( _rivet->analysisNames().size() != _analyses.size() ) {
+@@ -202,7 +206,11 @@ void RivetAnalysis::doinitrun() {
+   // create Rivet analysis handler
+   CurrentGenerator::Redirect stdout(cout);
+   _rivet = new Rivet::AnalysisHandler;
++#if ThePEG_RIVET_VERSION > 3
++  _rivet->setCheckBeams(_checkBeams);
++#else
+   _rivet->checkBeams(_checkBeams);
++#endif
+   for ( int i = 0, N = _paths.size(); i < N; ++i ) Rivet::addAnalysisLibPath(_paths[i]);
+   _rivet->addAnalyses(_analyses);
+   // check that analysis list is still available
+diff --git a/configure b/configure
+index 2ad5dfa..3074fe1 100755
+--- a/configure
++++ b/configure
+@@ -18684,9 +18684,11 @@ rivetversion=1
+ if test "x$with_rivet" = "xsystem"; then
+    echo $( rivet-config --version ) | grep -q '^2\.' && rivetversion=2
+    echo $( rivet-config --version ) | grep -q '^3\.' && rivetversion=3
++   echo $( rivet-config --version ) | grep -q '^4\.' && rivetversion=4
+ elif test "x$with_rivet" != "xno"; then
+    echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^2\.' && rivetversion=2
+    echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^3\.' && rivetversion=3
++   echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^4\.' && rivetversion=4
+ fi
+ 
+ 
+-- 
+2.56.0
+
