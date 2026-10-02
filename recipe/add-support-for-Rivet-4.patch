@@ -1,0 +1,48 @@
+From 812d58d3e76cf9aa9cac0e5ba330cbc6d1e6aa94 Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@cern.ch>
+Date: Fri, 2 Oct 2026 11:16:19 -0600
+Subject: [PATCH] Add support for Rivet 4
+
+configure only recognizes 'rivet-config --version' output starting with
+'2.' or '3.', so with Rivet 4 ThePEG_RIVET_VERSION is left at 1 and
+RivetAnalysis.cc and NLORivetAnalysis.cc fail to compile with
+'#error "Unknown ThePEG_RIVET_VERSION"'.
+
+Backport of the Rivet version detection from the upstream commit
+'changes for rivet 4', which is not part of a ThePEG release:
+
+c.f. https://github.com/hep-mirrors/thepeg/commit/d974704fe48876c13cb7f544cabcf6ef30c00f48
+
+The rest of the upstream commit, which follows the rename of
+Rivet::AnalysisHandler::checkBeams(bool) to setCheckBeams(bool) in
+Rivet 4, is not needed as ThePEG 2.2.3 does not call it.
+
+The upstream commit changes m4/rivet.m4. The release tarball ships a
+generated configure script, which is used as is, so the same change is
+applied to configure here instead. m4/rivet.m4 is deliberately left
+untouched: ThePEG does not use AM_MAINTAINER_MODE, so an m4 file newer
+than aclocal.m4 would make 'make' try to rerun aclocal, autoconf, and
+automake.
+---
+ configure | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configure b/configure
+index c3ab016..8ee2d12 100755
+--- a/configure
++++ b/configure
+@@ -17929,9 +17929,11 @@ rivetversion=1
+ if test "x$with_rivet" = "xsystem"; then
+    echo $( rivet-config --version ) | grep -q '^2\.' && rivetversion=2
+    echo $( rivet-config --version ) | grep -q '^3\.' && rivetversion=3
++   echo $( rivet-config --version ) | grep -q '^4\.' && rivetversion=4
+ elif test "x$with_rivet" != "xno"; then
+    echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^2\.' && rivetversion=2
+    echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^3\.' && rivetversion=3
++   echo $( "$with_rivet/bin/rivet-config" --version ) | grep -q '^4\.' && rivetversion=4
+ fi
+ 
+ 
+-- 
+2.56.0
+

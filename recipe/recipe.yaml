@@ -13,9 +13,13 @@ source:
     # TODO: Drop after move to v2.3.0 (patch is a backport)
     - fix-C-17-compatibility-of-Config-std.h-with-libc.patch
     - remove-whitespace-in-literal-operator-declarations.patch
+    - fix-hardcoded-install-paths-for-relocated-prefixes.patch
+    - fix-thepeg-config-exit-status-and-use-grep-E.patch
+    # TODO: Drop after move to a release with Rivet 4 support (patch is a backport)
+    - add-support-for-Rivet-4.patch
 
 build:
-  number: 6
+  number: 7
   skip:
     - win
   script:
@@ -23,7 +27,9 @@ build:
     # c.f. https://conda-forge.org/docs/how-to/advanced/cross-compilation/#autotools
     # ThePEG sets AC_CONFIG_AUX_DIR([Config]) in configure.ac, so configure looks for them in Config/
     - cp $BUILD_PREFIX/share/gnuconfig/config.* ./Config
-    - ./configure --prefix=${PREFIX} --with-fastjet=${PREFIX} --with-gsl=${PREFIX} --with-hepmc=${PREFIX} --with-lhapdf=${PREFIX} --with-boost=${PREFIX}
+    # Rivet is built against HepMC3, and ThePEG passes its HepMC events directly to Rivet,
+    # so ThePEG has to use HepMC3 as well (configure defaults to HepMC2)
+    - ./configure --prefix=${PREFIX} --with-fastjet=${PREFIX} --with-gsl=${PREFIX} --with-hepmc=${PREFIX} --with-hepmcversion=3 --with-lhapdf=${PREFIX} --with-rivet=${PREFIX} --with-boost=${PREFIX}
     - make -j${CPU_COUNT} CXX=$CXX
     - make check
     - make install
@@ -41,20 +47,20 @@ requirements:
     - fastjet-cxx  # pick up global pinning
     - fastjet-cxx-devel
     - gsl
-    - hepmc2
+    - hepmc3
     - lhapdf
     - libboost-devel
+    - rivet
     - zlib
   run:
     # thepeg-config --fastjet-include/--fastjet-libs point at FastJet headers and link libraries
     - fastjet-cxx-devel
+    # thepeg-config parses its options with grep
+    - grep
   run_exports:
     - ${{ pin_subpackage("thepeg", upper_bound="x.x") }}
 
 tests:
-  - script:
-      - runThePEG --version
-      - test -f "$(thepeg-config --fastjet-include | sed 's/^-I//')/fastjet/ClusterSequence.hh"
   - package_contents:
       bin:
         - runThePEG
@@ -67,6 +73,8 @@ tests:
       files:
         # Guard against FastJet support being silently disabled at configure time
         - lib/ThePEG/FastJetFinder.so
+        # Guard against Rivet support being silently disabled at configure time
+        - lib/ThePEG/RivetAnalysis.so
         - lib/ThePEG/*.so
         - if: linux
           then: lib/ThePEG/*.so.*
@@ -75,7 +83,35 @@ tests:
         - lib/ThePEG/ThePEGDefaults-2.2.3.rpo
         - lib/ThePEG/ThePEGDefaults.rpo
         - share/*
+        - etc/conda/test-files/thepeg/*
       strict: true
+
+  - script:
+      - thepeg-config --help
+      - thepeg-config --prefix
+      - thepeg-config --datadir
+      - thepeg-config --libdir
+      - thepeg-config --includedir
+      - thepeg-config --cppflags
+      - thepeg-config --ldflags
+      - thepeg-config --ldlibs
+      - thepeg-config --rivet-include
+      - thepeg-config --fastjet-include
+      - thepeg-config --rivet-libs
+      - thepeg-config --fastjet-libs
+
+      - runThePEG --version
+      - test -f "$(thepeg-config --fastjet-include | sed 's/^-I//')/fastjet/ClusterSequence.hh"
+      # Load RivetAnalysis.so and run a Rivet analysis in-process end to end
+      - setupThePEG --exitonerror test_rivet.in
+      - runThePEG RivetTest.run
+      - grep "/MC_XS/" RivetTest.yoda
+    requirements:
+      run:
+        - sed
+    files:
+      recipe:
+        - test_rivet.in
 
 about:
   homepage: https://thepeg.hepforge.org/
