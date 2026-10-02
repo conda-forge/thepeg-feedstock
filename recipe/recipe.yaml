@@ -61,16 +61,6 @@ requirements:
     - ${{ pin_subpackage("thepeg", upper_bound="x.x") }}
 
 tests:
-  - script:
-      - runThePEG --version
-      - test -f "$(thepeg-config --fastjet-include | sed 's/^-I//')/fastjet/ClusterSequence.hh"
-      # Load RivetAnalysis.so and run a Rivet analysis in-process end to end
-      - setupThePEG --exitonerror test_rivet.in
-      - runThePEG RivetTest.run
-      - grep "/MC_XS/" RivetTest.yoda
-    files:
-      recipe:
-        - test_rivet.in
   - package_contents:
       bin:
         - runThePEG
@@ -95,6 +85,33 @@ tests:
         - share/*
         - etc/conda/test-files/thepeg/*
       strict: true
+
+  - script:
+      - thepeg-config --help
+      - thepeg-config --prefix
+      - thepeg-config --datadir
+      - thepeg-config --libdir
+      - thepeg-config --includedir
+      - thepeg-config --cppflags
+      - thepeg-config --ldflags
+      - thepeg-config --ldlibs
+      - thepeg-config --rivet-include
+      - thepeg-config --fastjet-include
+      - thepeg-config --rivet-libs
+      - thepeg-config --fastjet-libs
+
+      - runThePEG --version
+      - test -f "$(thepeg-config --fastjet-include | sed 's/^-I//')/fastjet/ClusterSequence.hh"
+      # Load RivetAnalysis.so and run a Rivet analysis in-process end to end
+      - setupThePEG --exitonerror test_rivet.in
+      - runThePEG RivetTest.run
+      - grep "/MC_XS/" RivetTest.yoda
+    requirements:
+      run:
+        - sed
+    files:
+      recipe:
+        - test_rivet.in
 
 about:
   homepage: https://thepeg.hepforge.org/
