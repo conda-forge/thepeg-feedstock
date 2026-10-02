@@ -1,0 +1,88 @@
+From 203164835f53b716e2b524eab7ab2b73d21e800e Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@cern.ch>
+Date: Fri, 2 Oct 2026 13:16:22 -0600
+Subject: [PATCH] Fix thepeg-config exit status and use grep -E
+
+thepeg-config ends with the check for its last option
+
+    test -n "$tmp" && echo @FASTJETLIBS@
+
+so its exit status is 1 for every option but --fastjet-libs, including
+--help. Exit with 0 explicitly so that the exit status can be relied on.
+
+egrep is obsolescent and GNU grep >= 3.8 warns on every use, which
+thepeg-config does once per option that it knows. Use grep -E instead.
+This part is a backport of the changes to thepeg-config in the upstream
+commit 'various configure/m4 updates', which is not yet part of a ThePEG
+release:
+
+c.f. https://github.com/hep-mirrors/thepeg/commit/34ced462fa7254a3f1db7690140952937371e47a
+---
+ src/thepeg-config.in | 26 ++++++++++++++------------
+ 1 file changed, 14 insertions(+), 12 deletions(-)
+
+diff --git a/src/thepeg-config.in b/src/thepeg-config.in
+index 82c4b44..b74e402 100644
+--- a/src/thepeg-config.in
++++ b/src/thepeg-config.in
+@@ -5,7 +5,7 @@ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ datarootdir=@datarootdir@
+ 
+-tmp=$(echo $* | egrep -- '--\<help\>|-\<h\>')
++tmp=$(echo $* | grep -E -- '--\<help\>|-\<h\>')
+ if test $# -eq 0 || test -n "$tmp"; then
+     echo "thepeg-config: configuration tool for the ThePEG event generator framework"
+     echo "               http://projects.hepforge.org/thepeg/"
+@@ -28,35 +28,37 @@ if test $# -eq 0 || test -n "$tmp"; then
+     echo
+ fi
+ 
+-tmp=$(echo "$*" | egrep -- '--\<prefix\>')
++tmp=$(echo "$*" | grep -E -- '--\<prefix\>')
+ test -n "$tmp" && echo $prefix
+ 
+-tmp=$(echo "$*" | egrep -- '--\<datadir\>')
++tmp=$(echo "$*" | grep -E -- '--\<datadir\>')
+ test -n "$tmp" && echo @datadir@/@PACKAGE_TARNAME@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<libdir\>')
++tmp=$(echo "$*" | grep -E -- '--\<libdir\>')
+ test -n "$tmp" && echo @libdir@/@PACKAGE_TARNAME@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<includedir\>')
++tmp=$(echo "$*" | grep -E -- '--\<includedir\>')
+ test -n "$tmp" && echo @includedir@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<cppflags\>')
++tmp=$(echo "$*" | grep -E -- '--\<cppflags\>')
+ test -n "$tmp" && echo -I@includedir@  @BOOST_CPPFLAGS@ @GSLINCLUDE@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<ldflags\>')
++tmp=$(echo "$*" | grep -E -- '--\<ldflags\>')
+ test -n "$tmp" && echo @LDFLAGS@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<ldlibs\>')
++tmp=$(echo "$*" | grep -E -- '--\<ldlibs\>')
+ test -n "$tmp" && echo @LIBS@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<rivet-include\>')
++tmp=$(echo "$*" | grep -E -- '--\<rivet-include\>')
+ test -n "$tmp" && echo @RIVETINCLUDE@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<fastjet-include\>')
++tmp=$(echo "$*" | grep -E -- '--\<fastjet-include\>')
+ test -n "$tmp" && echo @FASTJETINCLUDE@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<rivet-libs\>')
++tmp=$(echo "$*" | grep -E -- '--\<rivet-libs\>')
+ test -n "$tmp" && echo @RIVETLIBS@
+ 
+-tmp=$(echo "$*" | egrep -- '--\<fastjet-libs\>')
++tmp=$(echo "$*" | grep -E -- '--\<fastjet-libs\>')
+ test -n "$tmp" && echo @FASTJETLIBS@
++
++exit 0
+-- 
+2.56.0
+
