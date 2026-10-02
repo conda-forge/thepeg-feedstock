@@ -15,7 +15,7 @@ source:
     - remove-whitespace-in-literal-operator-declarations.patch
 
 build:
-  number: 5
+  number: 6
   skip:
     - win
   script:
@@ -45,12 +45,16 @@ requirements:
     - lhapdf
     - libboost-devel
     - zlib
+  run:
+    # thepeg-config --fastjet-include/--fastjet-libs point at FastJet headers and link libraries
+    - fastjet-cxx-devel
   run_exports:
     - ${{ pin_subpackage("thepeg", upper_bound="x.x") }}
 
 tests:
   - script:
       - runThePEG --version
+      - test -f "$(thepeg-config --fastjet-include | sed 's/^-I//')/fastjet/ClusterSequence.hh"
   - package_contents:
       bin:
         - runThePEG
