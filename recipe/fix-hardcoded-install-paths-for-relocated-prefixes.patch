@@ -1,0 +1,106 @@
+From f273c61b4acfb2e193c50636023adb228036bcbc Mon Sep 17 00:00:00 2001
+From: Matthew Feickert <matthew.feickert@cern.ch>
+Date: Fri, 2 Oct 2026 11:56:52 -0600
+Subject: [PATCH] Fix hardcoded install paths for relocated prefixes
+
+The install paths THEPEG_PKGLIBDIR and THEPEG_PKGDATADIR are compiled in
+as string literals and used to build std::string objects. Relocatable
+installations (e.g. conda packages) replace the install prefix in the
+binaries with the shorter prefix of the environment and pad the string
+with null characters to keep its length.
+
+With clang and libc++ (macOS) the std::string constructor is inlined and
+the length of the literal is fixed at compile time, so the null padding
+ends up inside the path. setupThePEG then fails to find the default
+repository
+
+    Error: Could not find repository '$PREFIX/lib/ThePEG^@^@...^@/ThePEGDefaults.rpo'.
+
+and the default paths of the DynamicLoader and of the repository read
+directories are affected in the same way.
+
+Read the paths through a volatile pointer, so that the compiler can not
+make assumptions about the string and its length is found at run time.
+---
+ Repository/BaseRepository.cc | 7 ++++++-
+ Repository/Repository.cc     | 7 ++++++-
+ Utilities/DynamicLoader.cc   | 7 ++++++-
+ src/setupThePEG.cc           | 7 ++++++-
+ 4 files changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/Repository/BaseRepository.cc b/Repository/BaseRepository.cc
+index 820b1e4..a6f16e2 100644
+--- a/Repository/BaseRepository.cc
++++ b/Repository/BaseRepository.cc
+@@ -96,8 +96,13 @@ stack<string> & BaseRepository::currentReadDirStack() {
+ 
+ vector<string> & BaseRepository::readDirs() {
+   // macro is passed in from -D compile flag
++  // Read the path through a volatile pointer so that its length is found at
++  // run time. Relocatable installations (e.g. conda packages) replace the
++  // install prefix in the binary and pad the string with null characters,
++  // which end up inside the path if the length is fixed at compile time.
++  static const char * volatile pkgdatadir = THEPEG_PKGDATADIR;
+   static vector<string>
+-    theReadDirs(1, THEPEG_PKGDATADIR);
++    theReadDirs(1, pkgdatadir);
+   return theReadDirs;
+ }
+ 
+diff --git a/Repository/Repository.cc b/Repository/Repository.cc
+index 8c8bfe5..94809c9 100644
+--- a/Repository/Repository.cc
++++ b/Repository/Repository.cc
+@@ -380,7 +380,12 @@ string Repository::load(string filename) {
+   if ( !*is ) {
+     delete is;
+     // macro is passed in from -D compile flag
+-    string fullpath = string(THEPEG_PKGLIBDIR) + '/' + filename;
++    // Read the path through a volatile pointer so that its length is found at
++    // run time. Relocatable installations (e.g. conda packages) replace the
++    // install prefix in the binary and pad the string with null characters,
++    // which end up inside the path if the length is fixed at compile time.
++    static const char * volatile pkglibdir = THEPEG_PKGLIBDIR;
++    string fullpath = string(pkglibdir) + '/' + filename;
+     is = new PersistentIStream(fullpath);
+     if ( !*is ) {
+       delete is;
+diff --git a/Utilities/DynamicLoader.cc b/Utilities/DynamicLoader.cc
+index 8d50bad..7fc8dc2 100644
+--- a/Utilities/DynamicLoader.cc
++++ b/Utilities/DynamicLoader.cc
+@@ -152,7 +152,12 @@ map<string,string> DynamicLoader::versionMap;
+ vector<string> DynamicLoader::defaultPaths() {
+   vector<string> vpaths;
+   // macro is passed in from -D compile flag
+-  string instpath = THEPEG_PKGLIBDIR;
++  // Read the path through a volatile pointer so that its length is found at
++  // run time. Relocatable installations (e.g. conda packages) replace the
++  // install prefix in the binary and pad the string with null characters,
++  // which end up inside the path if the length is fixed at compile time.
++  static const char * volatile pkglibdir = THEPEG_PKGLIBDIR;
++  string instpath = pkglibdir;
+   vpaths.push_back(instpath);
+   vpaths.push_back(".");
+   return vpaths;
+diff --git a/src/setupThePEG.cc b/src/setupThePEG.cc
+index da85a68..33ba0d0 100644
+--- a/src/setupThePEG.cc
++++ b/src/setupThePEG.cc
+@@ -24,7 +24,12 @@ int main(int argc, char * argv[]) {
+   Debug::level = 1;
+ 
+   // macro is passed in from -D compile flag
+-  string repo = string(THEPEG_PKGLIBDIR) + "/ThePEGDefaults.rpo";
++  // Read the path through a volatile pointer so that its length is found at
++  // run time. Relocatable installations (e.g. conda packages) replace the
++  // install prefix in the binary and pad the string with null characters,
++  // which end up inside the path if the length is fixed at compile time.
++  static const char * volatile pkglibdir = THEPEG_PKGLIBDIR;
++  string repo = string(pkglibdir) + "/ThePEGDefaults.rpo";
+ 
+   string repout;
+   string file;
+-- 
+2.56.0
+

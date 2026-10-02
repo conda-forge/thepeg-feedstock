@@ -13,6 +13,7 @@ source:
     # TODO: Drop after move to v2.3.0 (patch is a backport)
     - fix-C-17-compatibility-of-Config-std.h-with-libc.patch
     - remove-whitespace-in-literal-operator-declarations.patch
+    - fix-hardcoded-install-paths-for-relocated-prefixes.patch
 
 build:
   number: 6
