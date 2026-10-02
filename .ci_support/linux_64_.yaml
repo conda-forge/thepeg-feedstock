@@ -16,12 +16,14 @@ fastjet_cxx:
 - '3.5'
 gsl:
 - '2.8'
-hepmc2:
-- '2.06'
+hepmc3:
+- '3.3'
 lhapdf:
 - '6.5'
 libboost_devel:
 - '1.90'
+rivet:
+- '4.1'
 target_platform:
 - linux-64
 zlib:

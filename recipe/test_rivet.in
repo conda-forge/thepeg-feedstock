@@ -1,0 +1,11 @@
+# Generate e+ e- -> q qbar events with the SimpleLEPGenerator from the default
+# repository and analyze them in-process with Rivet through RivetAnalysis.so.
+# Writes RivetTest.yoda at the end of the run.
+cd /Defaults/Generators
+set SimpleLEPGenerator:NumberOfEvents 100
+set SimpleLEPGenerator:EventHandler:LuminosityFunction:Energy 91.2
+set SimpleLEPGenerator:EventHandler:DecayHandler NULL
+create ThePEG::RivetAnalysis RivetAnalysis RivetAnalysis.so
+insert RivetAnalysis:Analyses 0 MC_XS
+insert SimpleLEPGenerator:AnalysisHandlers 0 RivetAnalysis
+saverun RivetTest SimpleLEPGenerator
