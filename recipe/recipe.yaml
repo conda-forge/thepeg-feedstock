@@ -19,7 +19,7 @@ source:
     - add-support-for-Rivet-4.patch
 
 build:
-  number: 7
+  number: 8
   skip:
     - win
   script:
