@@ -15,13 +15,13 @@ docker_image:
 fastjet_cxx:
 - '3.5'
 gsl:
-- '2.7'
+- '2.8'
 hepmc3:
 - '3.3'
 lhapdf:
 - '6.5'
 libboost_devel:
-- '1.88'
+- '1.90'
 rivet:
 - '4.1'
 target_platform:
