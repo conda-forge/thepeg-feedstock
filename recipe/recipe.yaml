@@ -18,7 +18,7 @@ source:
     - add-support-for-Rivet-4.patch
 
 build:
-  number: 3
+  number: 4
   skip:
     - win
   script:
@@ -49,6 +49,9 @@ requirements:
     - hepmc3
     - lhapdf
     - libboost-devel
+    # configure links libreadline automatically when it is found (VL_LIB_READLINE, enabled by default),
+    # so it must be a direct host dependency for its run_exports to apply
+    - readline
     - rivet
     - zlib
   run:
